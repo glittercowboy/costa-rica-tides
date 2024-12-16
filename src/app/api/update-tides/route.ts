@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
-import { TideInfo } from '@/types/models/beach';
+import { scrapeTides } from '@/lib/utils/tideScraper';
 
 // Initialize Redis client
 const redis = new Redis({
@@ -8,22 +8,7 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-function getTodayTides(): Record<string, TideInfo[]> {
-  const today = new Date().toISOString().split('T')[0];
-  
-  return {
-    "Playa Guapil": [
-      { time: `${today}T06:30:00-06:00`, type: 'LOW' as const, height: 0.2 },
-      { time: `${today}T12:45:00-06:00`, type: 'HIGH' as const, height: 2.1 },
-      { time: `${today}T18:55:00-06:00`, type: 'LOW' as const, height: 0.3 },
-    ],
-    "Playa Ventanas": [
-      { time: `${today}T06:45:00-06:00`, type: 'LOW' as const, height: 0.2 },
-      { time: `${today}T13:00:00-06:00`, type: 'HIGH' as const, height: 2.2 },
-      { time: `${today}T19:10:00-06:00`, type: 'LOW' as const, height: 0.3 },
-    ]
-  };
-}
+export const runtime = 'edge';
 
 export async function GET() {
   try {
@@ -35,13 +20,17 @@ export async function GET() {
       }, { status: 503 });
     }
 
-    const tideData = getTodayTides();
+    // Scrape the latest tide data
+    const tideData = await scrapeTides();
+    
+    // Store in Redis
     await redis.set('tide_data', JSON.stringify(tideData));
     await redis.set('last_updated', new Date().toISOString());
     
     return NextResponse.json({ 
       success: true,
-      message: 'Tide data updated successfully'
+      message: 'Tide data updated successfully',
+      data: tideData
     });
   } catch (error) {
     console.error('Failed to update tides:', error);

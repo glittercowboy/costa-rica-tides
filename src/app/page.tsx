@@ -14,6 +14,15 @@ const fallbackData: Record<string, TideInfo[]> = {
   ]
 };
 
+function formatTime(isoTime: string): string {
+  const date = new Date(isoTime);
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'America/Costa_Rica'
+  });
+}
+
 export default async function Home() {
   let tideData: Record<string, TideInfo[]>;
   let lastUpdated: string;
@@ -47,12 +56,14 @@ export default async function Home() {
           <BeachTideCard 
             key={beach}
             beach={beach}
-            tides={tides}
+            tides={tides.map(tide => ({...tide, time: formatTime(tide.time)}))}
           />
         ))}
 
         <div className="text-sm text-gray-500 text-center mt-8">
-          Last updated: {new Date(lastUpdated).toLocaleString()}
+          Last updated: {new Date(lastUpdated).toLocaleString('en-US', {
+            timeZone: 'America/Costa_Rica'
+          })}
         </div>
       </div>
     </main>
