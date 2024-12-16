@@ -4,7 +4,7 @@ import { scrapeTides } from '@/lib/utils/tideScraper';
 
 // Initialize Redis client
 const redis = new Redis({
-  url: process.env.KV_REST_API_URL!,
+  url: process.env.KV_URL!,
   token: process.env.KV_REST_API_TOKEN!,
 });
 
@@ -13,7 +13,7 @@ export const runtime = 'edge';
 export async function GET() {
   try {
     // Check if Redis is configured
-    if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+    if (!process.env.KV_URL || !process.env.KV_REST_API_TOKEN) {
       return NextResponse.json({ 
         success: false,
         message: 'Redis not configured'

@@ -30,7 +30,7 @@ export default async function Home() {
   try {
     // Initialize Redis client
     const redis = new Redis({
-      url: process.env.KV_REST_API_URL!,
+      url: process.env.KV_URL!,
       token: process.env.KV_REST_API_READ_ONLY_TOKEN!,
     });
 
