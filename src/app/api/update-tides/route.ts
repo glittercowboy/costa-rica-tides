@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 import { TideInfo } from '@/types/models/beach';
+
+// Initialize Redis client
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
 function getTodayTides(): Record<string, TideInfo[]> {
   const today = new Date().toISOString().split('T')[0];
@@ -21,17 +27,17 @@ function getTodayTides(): Record<string, TideInfo[]> {
 
 export async function GET() {
   try {
-    // Check if KV is available
-    if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+    // Check if Redis is configured
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
       return NextResponse.json({ 
         success: false,
-        message: 'Vercel KV not configured'
+        message: 'Redis not configured'
       }, { status: 503 });
     }
 
     const tideData = getTodayTides();
-    await kv.set('tide_data', tideData);
-    await kv.set('last_updated', new Date().toISOString());
+    await redis.set('tide_data', JSON.stringify(tideData));
+    await redis.set('last_updated', new Date().toISOString());
     
     return NextResponse.json({ 
       success: true,

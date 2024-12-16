@@ -1,8 +1,8 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 import { BeachTideCard } from '@/components/molecules/BeachTideCard';
 import { TideInfo } from '@/types/models/beach';
 
-// Fallback data for when KV is not available
+// Fallback data for when Redis is not available
 const fallbackData: Record<string, TideInfo[]> = {
   "Playa Guapil": [
     { time: new Date().toISOString(), type: 'LOW' as const, height: 0.2 },
@@ -19,17 +19,23 @@ export default async function Home() {
   let lastUpdated: string;
 
   try {
-    tideData = await kv.get('tide_data') as Record<string, TideInfo[]>;
-    lastUpdated = await kv.get('last_updated') as string;
+    // Initialize Redis client
+    const redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    });
+
+    // Fetch data from Redis
+    const storedTideData = await redis.get('tide_data');
+    const storedLastUpdated = await redis.get('last_updated');
+
+    // Parse the data or use fallback
+    tideData = storedTideData ? JSON.parse(storedTideData as string) : fallbackData;
+    lastUpdated = (storedLastUpdated as string) || new Date().toISOString();
   } catch (error) {
-    console.error('Failed to fetch from KV:', error);
+    console.error('Failed to fetch from Redis:', error);
     tideData = fallbackData;
     lastUpdated = new Date().toISOString();
-  }
-
-  // If KV returned null or undefined, use fallback data
-  if (!tideData) {
-    tideData = fallbackData;
   }
 
   return (
