@@ -2,9 +2,35 @@ import { kv } from '@vercel/kv';
 import { BeachTideCard } from '@/components/molecules/BeachTideCard';
 import { TideInfo } from '@/types/models/beach';
 
+// Fallback data for when KV is not available
+const fallbackData: Record<string, TideInfo[]> = {
+  "Playa Guapil": [
+    { time: new Date().toISOString(), type: 'LOW' as const, height: 0.2 },
+    { time: new Date().toISOString(), type: 'HIGH' as const, height: 2.1 },
+  ],
+  "Playa Ventanas": [
+    { time: new Date().toISOString(), type: 'LOW' as const, height: 0.2 },
+    { time: new Date().toISOString(), type: 'HIGH' as const, height: 2.2 },
+  ]
+};
+
 export default async function Home() {
-  const tideData = (await kv.get('tide_data') as Record<string, TideInfo[]>) || {};
-  const lastUpdated = await kv.get('last_updated') as string;
+  let tideData: Record<string, TideInfo[]>;
+  let lastUpdated: string;
+
+  try {
+    tideData = await kv.get('tide_data') as Record<string, TideInfo[]>;
+    lastUpdated = await kv.get('last_updated') as string;
+  } catch (error) {
+    console.error('Failed to fetch from KV:', error);
+    tideData = fallbackData;
+    lastUpdated = new Date().toISOString();
+  }
+
+  // If KV returned null or undefined, use fallback data
+  if (!tideData) {
+    tideData = fallbackData;
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 p-4 md:p-8">

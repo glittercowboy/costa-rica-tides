@@ -21,6 +21,14 @@ function getTodayTides(): Record<string, TideInfo[]> {
 
 export async function GET() {
   try {
+    // Check if KV is available
+    if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+      return NextResponse.json({ 
+        success: false,
+        message: 'Vercel KV not configured'
+      }, { status: 503 });
+    }
+
     const tideData = getTodayTides();
     await kv.set('tide_data', tideData);
     await kv.set('last_updated', new Date().toISOString());
