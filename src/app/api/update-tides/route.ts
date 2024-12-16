@@ -1,23 +1,28 @@
 import { NextResponse } from 'next/server';
 import { kv } from '@vercel/kv';
+import { TideInfo } from '@/types/models/beach';
 
-const TIDE_DATA = {
-  "Playa Guapil": [
-    { time: "6:30", type: "LOW", height: 0.2 },
-    { time: "12:45", type: "HIGH", height: 2.1 },
-    { time: "18:55", type: "LOW", height: 0.3 },
-  ],
-  "Playa Ventanas": [
-    { time: "6:45", type: "LOW", height: 0.2 },
-    { time: "13:00", type: "HIGH", height: 2.2 },
-    { time: "19:10", type: "LOW", height: 0.3 },
-  ]
-};
+function getTodayTides(): Record<string, TideInfo[]> {
+  const today = new Date().toISOString().split('T')[0];
+  
+  return {
+    "Playa Guapil": [
+      { time: `${today}T06:30:00-06:00`, type: 'LOW' as const, height: 0.2 },
+      { time: `${today}T12:45:00-06:00`, type: 'HIGH' as const, height: 2.1 },
+      { time: `${today}T18:55:00-06:00`, type: 'LOW' as const, height: 0.3 },
+    ],
+    "Playa Ventanas": [
+      { time: `${today}T06:45:00-06:00`, type: 'LOW' as const, height: 0.2 },
+      { time: `${today}T13:00:00-06:00`, type: 'HIGH' as const, height: 2.2 },
+      { time: `${today}T19:10:00-06:00`, type: 'LOW' as const, height: 0.3 },
+    ]
+  };
+}
 
 export async function GET() {
   try {
-    // Store the tide data in Vercel KV
-    await kv.set('tide_data', TIDE_DATA);
+    const tideData = getTodayTides();
+    await kv.set('tide_data', tideData);
     await kv.set('last_updated', new Date().toISOString());
     
     return NextResponse.json({ 

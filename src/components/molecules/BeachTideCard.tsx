@@ -1,7 +1,8 @@
-import { BeachTideData, TideInfo } from '@/types/models/beach';
+import { TideInfo } from '@/types/models/beach';
 
 interface BeachTideCardProps {
-  data: BeachTideData;
+  beach: string;
+  tides: TideInfo[];
 }
 
 function TideRow({ tide }: { tide: TideInfo }) {
@@ -19,30 +20,20 @@ function TideRow({ tide }: { tide: TideInfo }) {
           <span className={`text-sm font-medium ${
             tide.type === 'HIGH' ? 'text-blue-600' : 'text-amber-600'
           }`}>
-            {tide.type} TIDE
+            {tide.type} TIDE ({tide.height}m)
           </span>
         </div>
-      </div>
-      <div>
-        <span className="text-lg font-bold">{tide.height.toFixed(1)}m</span>
       </div>
     </div>
   );
 }
 
-export function BeachTideCard({ data }: BeachTideCardProps) {
-  // Sort tides by time
-  const sortedTides = [...data.tides].sort((a, b) => 
-    new Date(a.time).getTime() - new Date(b.time).getTime()
-  );
-
+export function BeachTideCard({ beach, tides }: BeachTideCardProps) {
   return (
-    <div className="w-full bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl overflow-hidden">
-      <div className="px-6 py-4 text-center">
-        <h2 className="text-2xl font-bold text-white">{data.beach.name}</h2>
-      </div>
-      <div className="p-6 space-y-3 bg-gradient-to-b from-white/10 to-white/20">
-        {sortedTides.map((tide, index) => (
+    <div className="bg-white/30 backdrop-blur-sm rounded-xl p-4 shadow-lg">
+      <h2 className="text-xl font-bold text-center mb-4">{beach}</h2>
+      <div className="space-y-3">
+        {tides.map((tide, index) => (
           <TideRow key={index} tide={tide} />
         ))}
       </div>
