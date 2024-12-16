@@ -1,0 +1,6 @@
+{
+  "crons": [{
+    "path": "/api/update-tides",
+    "schedule": "0 0 * * *"
+  }]
+}
