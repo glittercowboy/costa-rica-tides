@@ -5,31 +5,15 @@ import { BEACHES } from '@/lib/constants/beaches';
 import { BeachTideData } from '@/types/models/beach';
 import { fetchTideData } from '@/lib/api/tideForecast';
 import { useEffect, useState } from 'react';
+import { kv } from '@vercel/kv';
 
 function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
-export default function Home() {
-  const [tideData, setTideData] = useState<BeachTideData[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadTideData() {
-      try {
-        const today = formatDate(new Date());
-        const promises = BEACHES.map(beach => fetchTideData(beach, today));
-        const data = await Promise.all(promises);
-        setTideData(data);
-      } catch (error) {
-        console.error('Error loading tide data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadTideData();
-  }, []);
+export default async function Home() {
+  const tideData = await kv.get('tide_data') || {};
+  const lastUpdated = await kv.get('last_updated');
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -38,15 +22,17 @@ export default function Home() {
           Costa Rica Tide Times
         </h1>
         
-        {loading ? (
-          <div className="text-center text-gray-600">Loading tide data...</div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {tideData.map((data) => (
-              <BeachTideCard key={data.beach.name} data={data} />
-            ))}
-          </div>
-        )}
+        {Object.entries(tideData).map(([beach, tides]) => (
+          <BeachTideCard 
+            key={beach}
+            beach={beach}
+            tides={tides}
+          />
+        ))}
+
+        <div className="text-sm text-gray-500 text-center mt-8">
+          Last updated: {new Date(lastUpdated as string).toLocaleString()}
+        </div>
       </div>
     </main>
   );
